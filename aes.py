@@ -1,6 +1,6 @@
 from Crypto.Cipher import AES
-import hashlib
-
+import random
+import secrets
 
 def padding(message):
     while len(message)%16 != 0:
@@ -9,33 +9,38 @@ def padding(message):
     # Return in byte form
     return message.encode()
 
-password = "Th1$1$@$trongP@$$W0RD".encode()
-key = hashlib.sha256(password).digest()
+def encrypt_aes(message,key,mode,IV):
 
-# Cipher BlockChain mode 
-mode = AES.MODE_CBC
+    encryption_cipher = AES.new(key,mode,IV.encode())
 
-# Set Initialization Vector to 16 bytes
-# It helps to randomize the cipher text
-# Ideally it should be created randomly
-IV = '16 bytes needed.'.encode()
+    # We can finally encrypt the message using the cipher 
+    encrypted_message = encryption_cipher.encrypt(message)
+    print(f"This is the encrypted form: \n {encrypted_message}")
 
-encryption_cipher = AES.new(key,mode,IV)
-decryption_cipher = AES.new(key,mode,IV)
+    #Since decrypt() cannot be called after encrypt(), create a new cipher with the same configuration
 
-# The input must also be in chunks of 16 bytes so padding maybe required
-message = "This is a confidential information"
-padded_message = padding(message)
+    decryption_cipher = AES.new(key,mode,IV.encode())
+    decrypted_message = decryption_cipher.decrypt(encrypted_message)
+    print(f"This is the original message: \n {(decrypted_message.decode().strip())}")
 
-# We can finally encrypt the message using the cipher 
-encrypted_message = encryption_cipher.encrypt(padded_message)
-print(f"This is the encrypted form: \n {encrypted_message}")
+    return decrypted_message
 
 
-# We learn that decrypt() cannot be called after encrypt()
-# So to display both the encrypted and decrypted message in the same terminal,
-# We create a new cipher with the same key, mode, and iv.
-# We decode the string and remove the padding with strip()
-decrypted_message = decryption_cipher.decrypt(encrypted_message)
-print(f"This is the original message: \n {(decrypted_message.decode().strip())}")
+if __name__ == "__main__":
+    message = "This is a confidential information"
+    padded_message = padding(message)
+    
+    # Use the secrets package for keys
+    key= secrets.token_hex(16).encode()
+
+    # os.urandom can also be used to generate random numbers
+    # os.urandom is still pseudo-random, but cryptographically secure pseudo-random, which makes it much  more suitable for a wide range of use cases compared to random.
+
+    # Cipher BlockChain mode 
+    mode = AES.MODE_CBC
+
+    # Set Initialization Vector to 16 bytes
+    IV = ''.join(random.choice('0123456789ABCDEF') for i in range(16))
+
+    encrypt_aes(padded_message,key,mode,IV)
 
